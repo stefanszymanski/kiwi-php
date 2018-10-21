@@ -5,27 +5,27 @@ namespace Ctefan\Kiwi;
 class Solver
 {
     /**
-     * @var \SplObjectStorage
+     * @var \SplObjectStorage<Constraint, Tag>
      */
     protected $constraints;
     
     /**
-     * @var \SplObjectStorage
+     * @var \SplObjectStorage<Symbol, Row>
      */
     protected $rows;
     
     /**
-     * @var \SplObjectStorage
+     * @var \SplObjectStorage<Variable, Symbol>
      */
     protected $variables;
     
     /**
-     * @var \SplObjectStorage
+     * @var \SplObjectStorage<Variable, EditInfo>
      */
     protected $edits;
     
     /**
-     * @var array
+     * @var array<Symbol>
      */
     protected $infeasibleRows;
     
@@ -289,6 +289,173 @@ class Solver
     
     protected function createRow(Constraint $constraint, Tag $tag) : Row
     {
-        // TODO continue to implement
+        $expression = $constraint->getExpression();
+        $row = new Row($expression->getConstant());
+        
+        foreach ($this->terms as $term) {
+            if (false === Util::isNearZero($term->getCoefficient())) {
+                $symbol = $this->getVariableSymbol($term->getVariable());
+                
+                if (false === $this->rows->contains($symbol)) {
+                    $row->insert($symbol, $term->getCoefficient());
+                } else {
+                    $otherRow = $this->rows->offsetGet($symbol);
+                    $row->insertOtherRow($otherRow, $term->getCoefficient());
+                }
+                
+            }
+        }
+        
+        switch ($constraint->getOperator()) {
+            case RelationalOperator::LE:
+            case RelationalOperator::GE:
+                $coefficient = $constraint->getOperator() === RelationalOperator::LE ? 1.0 : -1.0;
+                $slack = new Symbol(Symbol::SLACK);
+                $tag->setMarker($slack);
+                $row->insert($slack, $coefficient);
+                if ($constraint->getStrength() < Strength::required()) {
+                    $errPlus = new Symbol(Symbol::ERROR);
+                    $errMinus = new Symbol(Symbol::ERROR);
+                    $tag->setMarker($errPlus);
+                    $tag->setOther($errMinus);
+                    $row->insert($errPlus, -1.0);
+                    $row->insert($errMinus, 1.0);
+                    $this->objective->insert($errPlus, $constraint->getStrength());
+                    $this->objective->insert($errMinus, $constraint->getStrength());
+                } else {
+                    $dummy = new Symbol(Symbol::DUMMY);
+                    $tag->setMarker($dummy);
+                    $row->insert($dummy);
+                }
+                break;
+            case RelationalOperator::EQ:
+                break;
+        }
+        
+        if ($row->getConstant() < 0.0) {
+            $row->reverseSign();
+        }
+        
+        return $row;
+    }
+    
+    protected function chooseSubject(Row $row, Tag $tag) : Symbol
+    {
+        foreach ($row->getCells() as $symbol) {
+            if ($symbol->getType() === Symbol::EXTERNAL) {
+                return $symbol;
+            }
+            if ($tag->getMarker()->getType() === Symbol::SLACK || $tag->getMarker()->getType() === Symbol::ERROR) {
+                if ($row->getCoefficientForSymbol($tag->getMarker()) < 0.0) {
+                    return $tag->getMarker();
+                }
+            }
+            if ($tag->getOther() !== null && ($tag->getOther()->getType() === Symbol::SLACK || $tag->getOther()->getType() === Symbol::ERROR)) {
+                if ($row->getCoefficientForSymbol($tag->getOther()) < 0.0) {
+                    return $tag->getOther();
+                }
+            }
+        }
+        return new Symbol();
+    }
+    
+    protected function addWithArtificialVariable(Row $row) : bool
+    {
+        $artificial = new Symbol(Symbol::SLACK);
+        $this->rows->attach($artificial, Row::createFromRow($row));
+        
+        $this->artificial = Row::createFromRow($row);
+        
+        $this->optimize($this->artificial);
+        
+        $success = Util::isNearZero($this->artificial->getConstant());
+        $this->artificial = null;
+        
+        if (true === $this->rows->contains($artificial)) {
+            $rowPointer = $this->rows->offsetGet($artificial);
+            $deleteQueue = [];
+            foreach ($this->rows as $symbol) {
+                if ($this->rows->offsetGet($symbol) === $rowPointer) {
+                    $deleteQueue[] = $symbol;
+                }
+            }
+            while (false === empty($deleteQueue)) {
+                $this->rows->offsetUnset(array_pop($deleteQueue));
+            }
+            
+            if (0 === count($rowPointer->getCells())) {
+                return $success;
+            }
+            
+            $entering = $this->anyPivotSymbol($rowPointer);
+            if ($entering->getType() === Symbol::INVALID) {
+                return false;
+            }
+            
+            $rowPointer->solveForSymbols($artificial, $entering);
+            $this->substitute($entering, $rowPointer);
+            $this->rows->attach($entering, $rowPointer);
+        }
+        
+        foreach ($this->rows as $symbol) {
+            $rowEntry = $this->rows->offsetGet($symbol);
+            $rowEntry->remove($artificial);
+        }
+        
+        return $success;
+    }
+    
+    protected function substitute(Symbol $symbol, Row $row) : void
+    {
+        foreach ($this->rows as $_symbol) {
+            $_row = $this->rows->offsetGet($_symbol);
+            $_row->substitute($symbol, $row);
+            if ($_symbol->getType() !== Symbol::EXTERNAL && $_row->getConstant() < 0.0) {
+                $this->infeasibleRows[] = $_symbol;
+            }
+        }
+        
+        $this->objective->substitute($symbol, $row);
+        
+        if (null !== $this->artificial) {
+            $this->artificial->substitute($symbol, $row);
+        }
+    }
+    
+    protected function optimize(Row $objective) : void
+    {
+        while (true) {
+            $entering = $this->getEnteringSymbol($objective);
+            if ($entering->getType() === Symbol::INVALID) {
+                return;
+            }
+            
+            $entry = $this->getLeavingRow($entering);
+            if (null === $entry) {
+                // TODO throw exception
+            }
+            $leaving = null;
+            
+            $entrySymbol = null;
+            foreach ($this->rows as $symbol) {
+                if ($this->rows->offsetGet($symbol) === $entry) {
+                    $entrySymbol = $symbol;
+                }
+            }
+            
+            $this->rows->offsetUnset($entrySymbol);
+            $entry->solveForSymbols($leaving, $entering);
+            $this->substitute($entering, $entry);
+            $this->rows->attach($entering, $entry);
+        }
+    }
+    
+    protected function dualOptimize() : void
+    {
+        while (false === empty($this->infeasibleRows)) {
+            $leaving = array_shift($this->infeasibleRows);
+            
+            
+        }
     }
 }

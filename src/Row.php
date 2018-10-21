@@ -10,7 +10,7 @@ class Row
     protected $constant;
     
     /**
-     * @var \SplObjectStorage
+     * @var \SplObjectStorage<Symbol, float>
      */
     protected $cells = [];
     

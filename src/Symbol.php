@@ -15,9 +15,9 @@ class Symbol
      */
     protected $type;
     
-    public function __construct()
+    public function __construct(int $type = self::INVALID)
     {
-        $this->type = self::INVALID;
+        $this->type = $type;
     }
     
     public function getType(): int
