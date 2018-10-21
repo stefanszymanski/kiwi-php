@@ -19,7 +19,7 @@ class Constraint
      */
     protected $operator;
     
-    public function __construct(Expression $expression, int $operator, ?float $strength)
+    public function __construct(Expression $expression, int $operator, ?float $strength = null)
     {
         $this->expression = self::reduce($expression);
         $this->operator = $operator;
