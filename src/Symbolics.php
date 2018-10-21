@@ -132,6 +132,11 @@ class Symbolics
         return new Expression($terms);
     }
     
+    static public function addVariableToTerm(Term $term, Variable $variable) : Expression
+    {
+        return self::addTerms($term, new Term($variable));
+    }
+    
     static public function addConstantToTerm(Term $term, float $constant) : Expression
     {
         return new Expression($term, $constant);
@@ -147,5 +152,56 @@ class Symbolics
        return self::addTerms($a, self::negateTerm($b));
    }
    
-   // TODO continue implementing with "public static Expression subtract(Term term, Variable variable)"
+   static public function subtractVariableFromTerm(Term $term, Variable $variable) : Expression
+   {
+       return self::addVariableToTerm($term, self::negateVariable($variable));
+   }
+   
+   static public function subtractConstantFromTerm(Term $term, float $constant) : Expression
+   {
+       return self::addConstantToTerm($term, -$constant);
+   }
+   
+   static public function addExpressionToVariable(Variable $variable, Expression $expression) : Expression
+   {
+       return self::addVariableToExpression($expression, $variable);
+   }
+   
+   static public function addTermToVariable(Variable $variable, Term $term) : Expression
+   {
+       return self::addVariableToTerm($term, $variable);
+   }
+   
+   static public function addVariables(Variable $a, Variable $b) : Expression
+   {
+       return self::addVariableToTerm(new Term($a), $b);
+   }
+   
+   static public function addConstantToVariable(Variable $variable, float $constant) : Expression
+   {
+       return self::addConstantToTerm(new Term($variable), $constant);
+   }
+   
+   static public function subtractExpressionFromVariable(Variable $variable, Expression $expression) : Expression
+   {
+       return self::addExpressionToVariable($variable, self::negateExpression($expression));
+   }
+   
+   static public function subtractTermFromVariable(Variable $variable, Term $term) : Expression
+   {
+       return self::addTermToVariable($variable, self::negateTerm($term));
+   }
+   
+   static public function subtractVariables(Variable $a, Variable $b) : Expression
+   {
+       return self::addVariables($a, self::negateVariable($b));
+   }
+   
+   static public function subtractConstantFromVariable(Variable $variable, float $constant) : Expression
+   {
+       return self::addConstantToVariable($variable, -$constant);
+   }
+   
+   
+   
 }

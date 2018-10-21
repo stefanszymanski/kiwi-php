@@ -387,7 +387,7 @@ class Solver
                 return $success;
             }
             
-            $entering = $this->anyPivotSymbol($rowPointer);
+            $entering = $this->anyPivotableSymbol($rowPointer);
             if ($entering->getType() === Symbol::INVALID) {
                 return false;
             }
@@ -454,8 +454,106 @@ class Solver
     {
         while (false === empty($this->infeasibleRows)) {
             $leaving = array_shift($this->infeasibleRows);
-            
+            if ($this->rows->contains($leaving)) {
+                $row = $this->rows->offsetGet($leaving);
+                if ($row->getConstant() < 0.0) {
+                    $entering = $this->getDualEnteringSymbol($row);
+                    if ($entering->getType() === Symbol::INVALID) {
+                        // TODO throw exception
+                    }
+                    $this->rows->offsetUnset($leaving);
+                    $row->solveForSymbols($leaving, $entering);
+                    $this->substitute($entering, $row);
+                    $this->rows->attach($entering, $row);
+                }
+            }
             
         }
+    }
+    
+    protected function getEnteringSymbol(Row $objective) : Symbol
+    {
+        foreach ($objective->getCells() as $symbol) {
+            $coefficient = $objective->getCells()->offsetGet($symbol);
+            if ($symbol->getType() !== Symbol::DUMMY && 0.0 > $coefficient) {
+                return $symbol;
+            }
+        }
+        return new Symbol();
+    }
+    
+    protected function getDualEnteringSymbol(Row $row) : Symbol
+    {
+        $entering = new Symbol();
+        $ratio = PHP_FLOAT_MAX;
+        
+        foreach ($row->getCells() as $symbol) {
+            if ($symbol->getType() !== Symbol::DUMMY) {
+                $currentCoefficient = $row->getCells()->offsetGet($symbol);
+                if (0.0 > $currentCoefficient) {
+                    $coefficient = $this->objective->getCoefficientForSymbol($symbol);
+                    $currentRatio = $coefficient / $currentCoefficient;
+                    if ($currentRatio < $ratio) {
+                        $ratio = $currentRatio;
+                        $entering = $symbol;
+                    }
+                }
+            }
+        }
+        
+        return $entering;
+    }
+    
+    protected function anyPivotableSymbol(Row $row) : Symbol
+    {
+        $symbol = new Symbol();
+        foreach ($row->getCells() as $_symbol) {
+            if ($_symbol->getType() === Symbol::SLACK || $_symbol->getType() === Symbol::ERROR) {
+                $symbol = $_symbol;
+            }
+        }
+        return $symbol;
+    }
+    
+    protected function getLeavingRow(Symbol $entering) : ?Row
+    {
+        $ratio = PHP_FLOAT_MAX;
+        $row = null;
+        
+        foreach ($this->rows as $symbol) {
+            $candidateRow = $this->rows->offsetGet($symbol);
+            $coefficient = $candidateRow->getCoefficientForSymbol($entering);
+            if (0 > $coefficient) {
+                $candidateRatio = -$candidateRow->getConstant() / $coefficient;
+                if ($candidateRatio < $ratio) {
+                    $ratio = $candidateRatio;
+                    $row = $candidateRow;
+                    
+                }
+            }
+        }
+        
+        return $row;
+    }
+    
+    protected function getVariableSymbol(Variable $variable) : Symbol
+    {
+        if (true === $this->variables->contains($variable)) {
+            $symbol = $this->variables->offsetGet($variable);
+        } else {
+            $symbol = new Symbol(Symbol::EXTERNAL);
+            $this->variables->attach($variable, $symbol);
+        }
+        return $symbol;
+    }
+    
+    protected function allDummies(Row $row) : bool
+    {
+        foreach ($row->getCells() as $symbol) {
+            if ($symbol->getType() !== Symbol::DUMMY) {
+                return false;
+            }
+        }
+        return true;
     }
 }
