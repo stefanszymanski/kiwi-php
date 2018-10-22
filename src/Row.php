@@ -56,11 +56,10 @@ class Row
             // TODO check if I implement this correctly
             if (false === $this->cells->contains($symbol)) {
                 $this->cells->attach($symbol, 0.0);
-            } else {
-                $temp = $this->cells->offsetGet($symbol) + $coefficient;
-                if (false === Util::isNearZero($temp)) {
-                    $this->cells->attach($symbol, $temp);
-                }
+            }
+            $temp = $this->cells->offsetGet($symbol) + $_coefficient;
+            if (false === Util::isNearZero($temp)) {
+                $this->cells->attach($symbol, $temp);
             }
         }
     }
@@ -68,7 +67,6 @@ class Row
     public function remove(Symbol $symbol) : void
     {
         $this->cells->offsetUnset($symbol);
-        // TODO see the comments in the original implementation
     }
     
     public function reverseSign() : void

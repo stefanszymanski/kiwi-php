@@ -66,7 +66,7 @@ class Solver
         $tag = new Tag();
         $row = $this->createRow($constraint, $tag);
         $subject = $this->chooseSubject($row, $tag);
-        
+
         if ($subject->getType() === Symbol::INVALID && true === $this->allDummies($row)) {
             if (false === Util::isNearZero($row->getConstant())) {
                 throw new UnsatisfiableConstraintException($constraint);
@@ -264,7 +264,7 @@ class Solver
         
         foreach ($this->rows as $symbol) {
             $candidateRow = $this->rows->offsetGet($symbol);
-            $coefficient = $candidateRow->coefficientFor($marker);
+            $coefficient = $candidateRow->getCoefficientForSymbol($marker);
             if (0.0 === $coefficient) {
                 continue;
             }
@@ -303,7 +303,6 @@ class Solver
         foreach ($expression->getTerms() as $term) {
             if (false === Util::isNearZero($term->getCoefficient())) {
                 $symbol = $this->getVariableSymbol($term->getVariable());
-                
                 if (false === $this->rows->contains($symbol)) {
                     $row->insert($symbol, $term->getCoefficient());
                 } else {
@@ -313,7 +312,7 @@ class Solver
                 
             }
         }
-        
+
         switch ($constraint->getOperator()) {
             case RelationalOperator::LE:
             case RelationalOperator::GE:
@@ -387,6 +386,7 @@ class Solver
         
         if (true === $this->rows->contains($artificial)) {
             $rowPointer = $this->rows->offsetGet($artificial);
+
             $deleteQueue = [];
             foreach ($this->rows as $symbol) {
                 if ($this->rows->offsetGet($symbol) === $rowPointer) {
@@ -397,7 +397,7 @@ class Solver
                 $this->rows->offsetUnset(array_pop($deleteQueue));
             }
             
-            if (0 === count($rowPointer->getCells())) {
+            if (0 === $rowPointer->getCells()->count()) {
                 return $success;
             }
             
@@ -448,7 +448,13 @@ class Solver
             if (null === $entry) {
                 throw new InternalSolverException('The objective is unbounded.');
             }
+
             $leaving = null;
+            foreach ($this->rows as $symbol) {
+                if ($this->rows->offsetGet($symbol) === $entry) {
+                    $leaving = $symbol;
+                }
+            }
             
             $entrySymbol = null;
             foreach ($this->rows as $symbol) {
