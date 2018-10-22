@@ -100,24 +100,13 @@ class Solver
         $this->removeConstraintEffects($constraint, $tag);
         
         if (true === $this->rows->contains($tag->getMarker())) {
-            $row = $this->rows->offsetGet($tag->getMarker());
-            $this->rows->offsetUnset($row);
+            $this->rows->offsetUnset($tag->getMarker());
         } else {
-            $row = $this->getMarkerLeavingRow($tag->getMarker());
-            if (null === $row) {
+            $leaving = $this->getMarkerLeavingSymbol($tag->getMarker());
+            if ($leaving->getType() === Symbol::INVALID) {
                 throw new InternalSolverException('Internal solver error');
             }
-            
-            $leaving = null;
-            foreach ($this->rows as $symbol) {
-                if (true === $this->rows->contains($symbol) && $this->rows->offsetGet($symbol) === $row) {
-                    $leaving = $symbol;
-                }
-                
-            }
-            if (null === $leaving) {
-                throw new InternalSolverException('Internal solver error');
-            }
+            $row = $this->rows->offsetGet($leaving);
             $this->rows->offsetUnset($leaving);
             $row->solveForSymbols($leaving, $tag->getMarker());
             $this->substitute($tag->getMarker(), $row);
@@ -252,15 +241,15 @@ class Solver
         }
     }
     
-    protected function getMarkerLeavingRow(Symbol $marker) : Row
+    protected function getMarkerLeavingSymbol(Symbol $marker) : Symbol
     {
         $max = PHP_FLOAT_MAX;
-        $r1 = $max;
-        $r2 = $max;
+        $ratio1 = $max;
+        $ratio2 = $max;
         
-        $first = null;
-        $second = null;
-        $third = null;
+        $first = new Symbol();
+        $second = new Symbol();
+        $third = new Symbol();
         
         foreach ($this->rows as $symbol) {
             $candidateRow = $this->rows->offsetGet($symbol);
@@ -269,27 +258,26 @@ class Solver
                 continue;
             }
             if ($symbol->getType() === Symbol::EXTERNAL) {
-                $third = $candidateRow;
+                $third = $symbol;
             } elseif (0.0 > $coefficient) {
-                $r = -$candidateRow->getConstant() / $coefficient;
-                if ($r < $r1) {
-                    $r1 = $r;
-                    $first = $candidateRow;
+                $ratio = -$candidateRow->getConstant() / $coefficient;
+                if ($ratio < $ratio1) {
+                    $ratio1 = $ratio;
+                    $first = $symbol;
                 }
             } else {
-                $r = $candidateRow->getConstant() / $coefficient;
-                if ($r < $r2) {
-                    $r2 = $r;
-                    $second = $candidateRow;
+                $ratio = $candidateRow->getConstant() / $coefficient;
+                if ($ratio < $ratio2) {
+                    $ratio2 = $ratio;
+                    $second = $symbol;
                 }
             }
-            
         }
         
-        if (null !== $first) {
+        if ($first->getType() !== Symbol::INVALID) {
             return $first;
         }
-        if (null !== $second) {
+        if ($second->getType() !== Symbol::INVALID) {
             return $second;
         }
         return $third;
@@ -421,11 +409,11 @@ class Solver
     
     protected function substitute(Symbol $symbol, Row $row) : void
     {
-        foreach ($this->rows as $_symbol) {
-            $_row = $this->rows->offsetGet($_symbol);
-            $_row->substitute($symbol, $row);
-            if ($_symbol->getType() !== Symbol::EXTERNAL && $_row->getConstant() < 0.0) {
-                $this->infeasibleRows[] = $_symbol;
+        foreach ($this->rows as $currentSymbol) {
+            $currentRow = $this->rows->offsetGet($currentSymbol);
+            $currentRow->substitute($symbol, $row);
+            if ($currentSymbol->getType() !== Symbol::EXTERNAL && $currentRow->getConstant() < 0.0) {
+                $this->infeasibleRows[] = $currentSymbol;
             }
         }
         
@@ -444,29 +432,16 @@ class Solver
                 return;
             }
             
-            $entry = $this->getLeavingRow($entering);
-            if (null === $entry) {
+            $leaving = $this->getLeavingSymbol($entering);
+            if ($leaving->getType() === Symbol::INVALID) {
                 throw new InternalSolverException('The objective is unbounded.');
             }
-
-            $leaving = null;
-            foreach ($this->rows as $symbol) {
-                if ($this->rows->offsetGet($symbol) === $entry) {
-                    $leaving = $symbol;
-                }
-            }
             
-            $entrySymbol = null;
-            foreach ($this->rows as $symbol) {
-                if ($this->rows->offsetGet($symbol) === $entry) {
-                    $entrySymbol = $symbol;
-                }
-            }
-            
-            $this->rows->offsetUnset($entrySymbol);
-            $entry->solveForSymbols($leaving, $entering);
-            $this->substitute($entering, $entry);
-            $this->rows->attach($entering, $entry);
+            $row = $this->rows->offsetGet($leaving);
+            $this->rows->offsetUnset($leaving);
+            $row->solveForSymbols($leaving, $entering);
+            $this->rows->attach($entering, $row);
+            $this->substitute($entering, $row);
         }
     }
     
@@ -535,25 +510,27 @@ class Solver
         return $symbol;
     }
     
-    protected function getLeavingRow(Symbol $entering) : ?Row
+    protected function getLeavingSymbol(Symbol $entering) : Symbol
     {
         $ratio = PHP_FLOAT_MAX;
-        $row = null;
+        $symbol = new Symbol();
         
-        foreach ($this->rows as $symbol) {
-            $candidateRow = $this->rows->offsetGet($symbol);
-            $coefficient = $candidateRow->getCoefficientForSymbol($entering);
-            if (0 > $coefficient) {
-                $candidateRatio = -$candidateRow->getConstant() / $coefficient;
-                if ($candidateRatio < $ratio) {
-                    $ratio = $candidateRatio;
-                    $row = $candidateRow;
-                    
+        foreach ($this->rows as $currentSymbol) {
+            if ($currentSymbol->getType() === Symbol::EXTERNAL) {
+                continue;
+            }
+            $currentRow = $this->rows->offsetGet($currentSymbol);
+            $temp = $currentRow->getCoefficientForSymbol($entering);
+            if (0.0 > $temp) {
+                $tempRatio = -$currentRow->getConstant() / $temp;
+                if ($tempRatio < $ratio) {
+                    $ratio = $tempRatio;
+                    $symbol = $currentSymbol;
                 }
             }
         }
         
-        return $row;
+        return $symbol;
     }
     
     protected function getVariableSymbol(Variable $variable) : Symbol

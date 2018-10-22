@@ -52,15 +52,7 @@ class Row
         
         foreach ($otherRow->getCells() as $symbol) {
             $_coefficient = $otherRow->getCells()->offsetGet($symbol) * $coefficient;
-            
-            // TODO check if I implement this correctly
-            if (false === $this->cells->contains($symbol)) {
-                $this->cells->attach($symbol, 0.0);
-            }
-            $temp = $this->cells->offsetGet($symbol) + $_coefficient;
-            if (false === Util::isNearZero($temp)) {
-                $this->cells->attach($symbol, $temp);
-            }
+            $this->insert($symbol, $_coefficient);
         }
     }
     
@@ -83,7 +75,7 @@ class Row
     
     public function solveForSymbol(Symbol $symbol) : void
     {
-        $coefficient = -1.0 /  $this->cells->offsetGet($symbol);
+        $coefficient = -1.0 / $this->cells->offsetGet($symbol);
         $this->cells->offsetUnset($symbol);
         $this->constant *= $coefficient;
         
