@@ -2,6 +2,8 @@
 
 namespace Ctefan\Kiwi;
 
+use Ctefan\Kiwi\Exception\NonlinearExpressionException;
+
 class Symbolics
 {
     protected function __construct(){}
@@ -46,8 +48,7 @@ class Symbolics
     {
         return self::_callMethodForArguments($a, $b, 'greaterThanOrEquals%s%s');
     }
-    
-    
+
     static private $names = [
         Expression::class => 'Expression',
         Term::class => 'Term',
@@ -64,7 +65,7 @@ class Symbolics
             self::$names[is_object($b) ? get_class($b) : gettype($b)]
         );
         if (false === method_exists(self::class, $methodName)) {
-            // TODO throw exception
+            throw new \InvalidArgumentException();
         }
         return self::$methodName($a, $b);
     }
@@ -125,7 +126,7 @@ class Symbolics
         } elseif (true === $b->isConstant()) {
             return self::multiplyExpressionWithConstant($a, $b->getConstant());
         } else {
-            // TODO throw exception
+            throw new NonlinearExpressionException();
         }
     }
     
@@ -139,7 +140,7 @@ class Symbolics
         if (true === $b->isConstant()) {
             return self::divideExpressioByConstant($a, $b->getConstant());
         } else {
-            // TODO throw exception
+            throw new NonlinearExpressionException();
         }
     }
     

@@ -2,6 +2,14 @@
 
 namespace Ctefan\Kiwi;
 
+use Ctefan\Kiwi\Exception\DuplicateConstraintException;
+use Ctefan\Kiwi\Exception\DuplicateEditVariableException;
+use Ctefan\Kiwi\Exception\InternalSolverException;
+use Ctefan\Kiwi\Exception\RequiredFailureException;
+use Ctefan\Kiwi\Exception\UnknownConstraintException;
+use Ctefan\Kiwi\Exception\UnknownEditVariableException;
+use Ctefan\Kiwi\Exception\UnsatisfiableConstraintException;
+
 class Solver
 {
     /**
@@ -52,7 +60,7 @@ class Solver
     public function addConstraint(Constraint $constraint) : void
     {
         if (true === $this->constraints->contains($constraint)) {
-            // TODO throw exception
+            throw new DuplicateConstraintException($constraint);
         }
         
         $tag = new Tag();
@@ -61,7 +69,7 @@ class Solver
         
         if ($subject->getType() === Symbol::INVALID && $this->allDummies($row)) {
             if (false === Util::isNearZero($row->getConstant())) {
-                // TODO throw exception
+                throw new UnsatisfiableConstraintException($constraint);
             } else {
                 $subject = $tag->getMarker();
             }
@@ -69,7 +77,7 @@ class Solver
         
         if ($subject->getType() === Symbol::INVALID) {
             if (false === $this->addWithArtificialVariable($row)) {
-                // TODO throw exception
+                throw new UnsatisfiableConstraintException($constraint);
             }
         } else {
             $row->solveFor($subject);
@@ -84,7 +92,7 @@ class Solver
     public function removeConstraint(Constraint $constraint) : void
     {
         if (false === $this->constraints->contains($constraint)) {
-            // TODO throw exception
+            throw new UnknownConstraintException($constraint);
         }
         
         $tag = $this->constraints->offsetGet($constraint);
@@ -97,7 +105,7 @@ class Solver
         } else {
             $row = $this->getMarkerLeavingRow($tag->getMarker());
             if (null === $row) {
-                // TODO throw exception
+                throw new InternalSolverException('Internal solver error');
             }
             
             $leaving = null;
@@ -108,7 +116,7 @@ class Solver
                 
             }
             if (null === $leaving) {
-                // TODO throw exception
+                throw new InternalSolverException('Internal solver error');
             }
             $this->rows->offsetUnset($leaving);
             $row->solveFor($leaving, $tag->getMarker());
@@ -126,13 +134,13 @@ class Solver
     public function addEditVariable(Variable $variable, float $strength) : void
     {
         if ($this->edits->contains($variable)) {
-            // TODO throw exception
+            throw new DuplicateEditVariableException();
         }
         
         $strength = Strength::clip($strength);
         
         if (Strength::required() === $strength) {
-            // TODO throw exception
+            throw new RequiredFailureException();
         }
         
         $terms = [];
@@ -154,7 +162,7 @@ class Solver
     public function removeEditVariable(Variable $variable) : void
     {
         if (false === $this->edits->contains($variable)) {
-            // TODO throw exception
+            throw new UnknownEditVariableException();
         }
         
         $info = $this->edits->offsetGet($variable);
@@ -176,7 +184,7 @@ class Solver
     public function suggestValue(Variable $variable, float $value) : void
     {
         if (false === $this->edits->contains($variable)) {
-            // TODO throw exception
+            throw new UnknownEditVariableException();
         }
         
         $info = $this->edits->offsetGet($variable);
@@ -432,7 +440,7 @@ class Solver
             
             $entry = $this->getLeavingRow($entering);
             if (null === $entry) {
-                // TODO throw exception
+                throw new InternalSolverException('The objective is unbounded.');
             }
             $leaving = null;
             
@@ -459,7 +467,7 @@ class Solver
                 if ($row->getConstant() < 0.0) {
                     $entering = $this->getDualEnteringSymbol($row);
                     if ($entering->getType() === Symbol::INVALID) {
-                        // TODO throw exception
+                        throw new InternalSolverException('Internal solver error');
                     }
                     $this->rows->offsetUnset($leaving);
                     $row->solveForSymbols($leaving, $entering);
