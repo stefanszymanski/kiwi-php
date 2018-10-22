@@ -38,13 +38,16 @@ class Expression
     {
         return 0 === count($this->terms);
     }
-    
+
+    /**
+     * @return array|Term[]
+     */
     public function getTerms() : array
     {
         return $this->terms;
     }
     
-    public function setTerms($terms): void
+    public function setTerms(array $terms): void
     {
         $this->terms = $terms;
     }

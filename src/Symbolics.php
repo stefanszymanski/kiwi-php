@@ -15,7 +15,7 @@ class Symbolics
     
     static public function divide($a, $b)
     {
-        return self::_callMethodForArguments($a, $b, 'divide%sBy$s');
+        return self::_callMethodForArguments($a, $b, 'divide%2$sBy$1$s');
     }
     
     static public function negate($subject)
@@ -25,12 +25,12 @@ class Symbolics
     
     static public function add($a, $b) : Expression
     {
-        return self::_callMethodForArguments($a, $b, 'add%sTo%s');
+        return self::_callMethodForArguments($a, $b, 'add%2$sTo%1$s');
     }
     
     static public function subtract($a, $b) : Expression
     {
-        return self::_callMethodForArguments($a, $b, 'subtract$sFrom%s');
+        return self::_callMethodForArguments($a, $b, 'subtract$2$sFrom%1$s');
     }
     
     static public function equals($a, $b) : Constraint
@@ -54,6 +54,7 @@ class Symbolics
         Term::class => 'Term',
         Variable::class => 'Variable',
         'double' => 'Constant',
+        'integer' => 'Constant',
         'NULL' => '',
     ];
     
@@ -70,7 +71,7 @@ class Symbolics
         return self::$methodName($a, $b);
     }
     
-    
+
     /*
      * Term factory methods.
      */
@@ -122,7 +123,7 @@ class Symbolics
     static public function multiplyExpressionWithExpression(Expression $a, Expression $b) : Expression
     {
         if (true === $a->isConstant()) {
-            return self::multiplyExpresion($b, $a->getConstant());
+            return self::multiplyExpressionWithConstant($b, $a->getConstant());
         } elseif (true === $b->isConstant()) {
             return self::multiplyExpressionWithConstant($a, $b->getConstant());
         } else {
@@ -151,16 +152,13 @@ class Symbolics
     
     static public function addExpressionToExpression(Expression $a, Expression $b) : Expression
     {
-        $terms = [];
-        $terms += $a->getTerms();
-        $terms += $b->getTerms();
+        $terms = array_merge($a->getTerms(), $b->getTerms());
         return new Expression($terms, $a->getConstant() + $b->getConstant());
     }
     
     static public function addTermToExpression(Expression $expression, Term $term) : Expression
     {
-        $terms = [];
-        $terms += $expression->getTerms();
+        $terms = $expression->getTerms();
         $terms[] = $term;
         return new Expression($terms, $expression->getConstant());
     }
@@ -187,7 +185,7 @@ class Symbolics
     
     static public function subtractVariableFromExpression(Expression $expression, Variable $variable) : Expression
     {
-        return self::addVariableToExpression($expression, self::negateVariable($variable));
+        return self::addTermToExpression($expression, self::negateVariable($variable));
     }
     
     static public function subtractConstantFromExpression(Expression $expression, float $constant) : Expression
@@ -213,7 +211,7 @@ class Symbolics
     
     static public function addConstantToTerm(Term $term, float $constant) : Expression
     {
-        return new Expression($term, $constant);
+        return new Expression([$term], $constant);
     }
     
    static public function subtractExpressionFromTerm(Term $term, Expression $expression) : Expression
@@ -228,7 +226,7 @@ class Symbolics
    
    static public function subtractVariableFromTerm(Term $term, Variable $variable) : Expression
    {
-       return self::addVariableToTerm($term, self::negateVariable($variable));
+       return self::addTermToTerm($term, self::negateVariable($variable));
    }
    
    static public function subtractConstantFromTerm(Term $term, float $constant) : Expression
@@ -268,7 +266,7 @@ class Symbolics
    
    static public function subtractVariableFromVariable(Variable $a, Variable $b) : Expression
    {
-       return self::addVariableToVariable($a, self::negateVariable($b));
+       return self::addTermToVariable($a, self::negateVariable($b));
    }
    
    static public function subtractConstantFromVariable(Variable $variable, float $constant) : Expression
@@ -293,7 +291,7 @@ class Symbolics
    
    static public function subtractExpressionFromConstant(float $constant, Expression $expression) : Expression
    {
-       return self::addConstantToExpression(self::negateExpression($expression, $constant));
+       return self::addConstantToExpression(self::negateExpression($expression), $constant);
    }
    
    static public function subtractTermFromConstant(float $constant, Term $term) : Expression
@@ -303,7 +301,7 @@ class Symbolics
    
    static public function subtractVariableFromConstant(float $constant, Variable $variable) : Expression
    {
-       return self::addConstantToVariable(self::negateVariable($variable), $constant);
+       return self::addConstantToTerm(self::negateVariable($variable), $constant);
    }
    
    

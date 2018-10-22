@@ -4,8 +4,14 @@ namespace Ctefan\Kiwi;
 
 class Term
 {
+    /**
+     * @var Variable
+     */
      protected $variable;
-     
+
+    /**
+     * @var float
+     */
      protected $coefficient;
      
      public function __construct(Variable $variable, float $coefficient = 1.0)

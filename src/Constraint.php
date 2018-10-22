@@ -23,7 +23,7 @@ class Constraint
     {
         $this->expression = self::reduce($expression);
         $this->operator = $operator;
-        $this->strength = $strength ? Strength::clip($strength) : Stength::required();
+        $this->strength = $strength ? Strength::clip($strength) : Strength::required();
     }
     
     static public function createFromConstraint(self $otherConstraint, float $strength) : self
@@ -41,7 +41,7 @@ class Constraint
             } else {
                 $value = $variables->offsetGet($variable);
             }
-            $value += $term->getCoefficent();
+            $value += $term->getCoefficient();
             $variables->attach($variable, $value);
         }
         
@@ -68,9 +68,10 @@ class Constraint
         return $this->strength;
     }
     
-    public function setStrength(float $strength): void
+    public function setStrength(float $strength): self
     {
         $this->strength = $strength;
+        return $this;
     }
     
     public function getOperator(): int
