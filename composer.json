@@ -1,6 +1,15 @@
 {
-    "type": "project",
-    "license": "proprietary",
+    "name": "ctefan/kiwi",
+    "description": "A PHP implementation of the Cassowary constraint solving algorithm",
+    "keywords": ["constraint", "cassowary", "kiwi"],
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+      {
+        "name": "Stefan Szymanski",
+        "email": "ctefan.szymanski@gmail.com"
+      }
+    ],
     "require": {
         "php": "^7.2"
     },
