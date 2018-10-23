@@ -5,7 +5,6 @@ use Ctefan\Kiwi\Solver;
 use Ctefan\Kiwi\Variable;
 use Ctefan\Kiwi\Symbolics;
 use Ctefan\Kiwi\Strength;
-use Ctefan\Kiwi\Constraint;
 
 class SimpleTest extends TestCase
 {
@@ -46,7 +45,7 @@ class SimpleTest extends TestCase
         $this::assertEquals($x->getValue(), $y->getValue());
     }
 
-    public function testVariablesWithStrengths()
+    public function testVariablesWithStrengths() : void
     {
         $solver = new Solver();
         $x = new Variable('x');
@@ -67,7 +66,7 @@ class SimpleTest extends TestCase
         }
     }
 
-    public function testAddAndDeleteConstraints()
+    public function testAddAndDeleteConstraints() : void
     {
         $solver = new Solver();
         $x = new Variable('x');
@@ -125,6 +124,74 @@ class SimpleTest extends TestCase
         $solver->updateVariables();
         
         $this::assertEquals(10.0, $x->getValue());
+        $this::assertEquals(120.0, $y->getValue());
+
+        $solver->removeConstraint($constraint10);
+        $solver->updateVariables();
+
+        $constraintXY = Symbolics::equals(Symbolics::multiply($x, 2.0), $y);
+        $solver->addConstraint($constraintXY);
+        $solver->updateVariables();
+
+        $this::assertEquals(20.0, $x->getValue());
+        $this::assertEquals(40.0, $y->getValue());
+
+        $solver->removeConstraint($constraint20);
+        $solver->updateVariables();
+
+        $this::assertEquals(60, $x->getValue());
         $this::assertEquals(120, $y->getValue());
+
+        $solver->removeConstraint($constraintXY);
+        $solver->updateVariables();
+
+        $this::assertEquals(100, $x->getValue());
+        $this::assertEquals(120, $y->getValue());
+    }
+
+    /**
+     * @expectedException \Ctefan\Kiwi\Exception\UnsatisfiableConstraintException
+     */
+    public function testInconsistent1() : void
+    {
+        $solver = new Solver();
+        $x = new Variable('x');
+
+        $solver->addConstraint(Symbolics::equals($x, 10.0));
+        $solver->addConstraint(Symbolics::equals($x, 5.0));
+        $solver->updateVariables();
+    }
+
+    /**
+     * @expectedException \Ctefan\Kiwi\Exception\UnsatisfiableConstraintException
+     */
+    public function testInconsistent2() : void
+    {
+        $solver = new Solver();
+        $x = new Variable('x');
+
+        $solver->addConstraint(Symbolics::greaterThanOrEquals($x, 10.0));
+        $solver->addConstraint(Symbolics::lessThanOrEquals($x, 5.0));
+        $solver->updateVariables();
+    }
+
+    /**
+     * @expectedException \Ctefan\Kiwi\Exception\UnsatisfiableConstraintException
+     */
+    public function testInconsistent3() : void
+    {
+        $solver = new Solver();
+        $w = new Variable('w');
+        $x = new Variable('x');
+        $y = new Variable('y');
+        $z = new Variable('z');
+
+        $solver->addConstraint(Symbolics::greaterThanOrEquals($w, 10.0));
+        $solver->addConstraint(Symbolics::greaterThanOrEquals($x, $w));
+        $solver->addConstraint(Symbolics::greaterThanOrEquals($y, $x));
+        $solver->addConstraint(Symbolics::greaterThanOrEquals($z, $y));
+        $solver->addConstraint(Symbolics::greaterThanOrEquals($z, 8.0));
+        $solver->addConstraint(Symbolics::lessThanOrEquals($z, 4.0));
+        $solver->updateVariables();
     }
 }
