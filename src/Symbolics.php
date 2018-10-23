@@ -10,7 +10,7 @@ class Symbolics
     
     static public function multiply($a, $b)
     {
-        return self::_callMethodForArguments($a, $b, 'multiply%sWith$s');
+        return self::_callMethodForArguments($a, $b, 'multiply%sWith%s');
     }
     
     static public function divide($a, $b)
@@ -66,7 +66,7 @@ class Symbolics
             self::$names[is_object($b) ? get_class($b) : gettype($b)]
         );
         if (false === method_exists(self::class, $methodName)) {
-            throw new \InvalidArgumentException();
+            throw new \InvalidArgumentException("Method $methodName does not exist.");
         }
         return self::$methodName($a, $b);
     }
