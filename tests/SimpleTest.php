@@ -11,7 +11,7 @@ class SimpleTest extends TestCase
 {
     protected const EPSILON = 1.0e-8;
 
-    public function testCreateVariable() : void
+    public function testCreateVariable(): void
     {
         $solver = new Solver();
         $x = new Variable('x');
@@ -22,12 +22,11 @@ class SimpleTest extends TestCase
         $this::assertEquals(18, $x->getValue());
     }
 
-    public function testAddVariables() : void
+    public function testAddVariables(): void
     {
         $solver = new Solver();
         $x = new Variable('x');
-        $y = new Variable('y')
-        ;
+        $y = new Variable('y');
         $solver->addConstraint(Symbolics::equals($x, 20.0));
         $solver->addConstraint(Symbolics::equals(Symbolics::add($x, 2.0), Symbolics::add($y, 10.0)));
         $solver->updateVariables();
@@ -46,7 +45,7 @@ class SimpleTest extends TestCase
         $this::assertEquals($x->getValue(), $y->getValue());
     }
 
-    public function testVariablesWithStrengths() : void
+    public function testVariablesWithStrengths(): void
     {
         $solver = new Solver();
         $x = new Variable('x');
@@ -67,7 +66,7 @@ class SimpleTest extends TestCase
         }
     }
 
-    public function testAddAndDeleteConstraints() : void
+    public function testAddAndDeleteConstraints(): void
     {
         $solver = new Solver();
         $x = new Variable('x');
@@ -98,32 +97,32 @@ class SimpleTest extends TestCase
         $solver->addConstraint($constraint10again);
         $solver->updateVariables();
         $this::assertEquals(10.0, $x->getValue());
-        
+
         $solver->removeConstraint($constraint10);
         $solver->updateVariables();
         $this::assertEquals(10.0, $x->getValue());
-        
+
         $solver->removeConstraint($constraint10again);
         $solver->updateVariables();
         $this::assertEquals(100, $x->getValue());
     }
-    
-    public function testAddAndDeleteConstraints2() : void
+
+    public function testAddAndDeleteConstraints2(): void
     {
         $solver = new Solver();
         $x = new Variable('x');
         $y = new Variable('y');
-        
+
         $solver->addConstraint(Symbolics::equals($x, 100.0)->setStrength(Strength::weak()));
         $solver->addConstraint(Symbolics::equals($y, 120.0)->setStrength(Strength::strong()));
-        
+
         $constraint10 = Symbolics::lessThanOrEquals($x, 10.0);
         $constraint20 = Symbolics::lessThanOrEquals($x, 20.0);
-        
+
         $solver->addConstraint($constraint10);
         $solver->addConstraint($constraint20);
         $solver->updateVariables();
-        
+
         $this::assertEquals(10.0, $x->getValue());
         $this::assertEquals(120.0, $y->getValue());
 
@@ -153,7 +152,7 @@ class SimpleTest extends TestCase
     /**
      * @expectedException \Ctefan\Kiwi\Exception\UnsatisfiableConstraintException
      */
-    public function testInconsistent1() : void
+    public function testInconsistent1(): void
     {
         $solver = new Solver();
         $x = new Variable('x');
@@ -166,7 +165,7 @@ class SimpleTest extends TestCase
     /**
      * @expectedException \Ctefan\Kiwi\Exception\UnsatisfiableConstraintException
      */
-    public function testInconsistent2() : void
+    public function testInconsistent2(): void
     {
         $solver = new Solver();
         $x = new Variable('x');
@@ -179,7 +178,7 @@ class SimpleTest extends TestCase
     /**
      * @expectedException \Ctefan\Kiwi\Exception\UnsatisfiableConstraintException
      */
-    public function testInconsistent3() : void
+    public function testInconsistent3(): void
     {
         $solver = new Solver();
         $w = new Variable('w');

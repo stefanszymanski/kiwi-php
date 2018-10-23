@@ -8,7 +8,7 @@ use Ctefan\Kiwi\Symbolics;
 
 class ConstantVariableTest extends TestCase
 {
-    public function testLessThanOrEqual() : void
+    public function testLessThanOrEqual(): void
     {
         $solver = new Solver;
         $x = new Variable('x');
@@ -27,7 +27,7 @@ class ConstantVariableTest extends TestCase
     /**
      * @expectedException \Ctefan\Kiwi\Exception\UnsatisfiableConstraintException
      */
-    public function testLessThanOrEqualUnsatisfied() : void
+    public function testLessThanOrEqualUnsatisfied(): void
     {
         $solver = new Solver();
         $x = new Variable('x');
@@ -41,7 +41,7 @@ class ConstantVariableTest extends TestCase
         $solver->updateVariables();
     }
 
-    public function testGreaterThanOrEqual() : void
+    public function testGreaterThanOrEqual(): void
     {
         $solver = new Solver();
         $x = new Variable('x');
@@ -60,7 +60,7 @@ class ConstantVariableTest extends TestCase
     /**
      * @expectedException \Ctefan\Kiwi\Exception\UnsatisfiableConstraintException
      */
-    public function testGreaterThanOrEqualUnsatisfiable() : void
+    public function testGreaterThanOrEqualUnsatisfiable(): void
     {
         $solver = new Solver();
         $x = new Variable('x');

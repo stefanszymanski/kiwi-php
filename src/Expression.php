@@ -12,7 +12,7 @@ class Expression
      * @var array|Term[]
      */
     protected $terms;
-    
+
     /**
      * @var float
      */
@@ -36,7 +36,7 @@ class Expression
      * @param Term $term
      * @return Expression
      */
-    static public function createFromTerm(Term $term) : self
+    static public function createFromTerm(Term $term): self
     {
         return new self([$term], 0.0);
     }
@@ -44,7 +44,7 @@ class Expression
     /**
      * @return float
      */
-    public function getValue() : float
+    public function getValue(): float
     {
         $value = $this->constant;
         foreach ($this->terms as $term) {
@@ -56,7 +56,7 @@ class Expression
     /**
      * @return bool
      */
-    public function isConstant() : bool
+    public function isConstant(): bool
     {
         return 0 === count($this->terms);
     }
@@ -64,7 +64,7 @@ class Expression
     /**
      * @return array|Term[]
      */
-    public function getTerms() : array
+    public function getTerms(): array
     {
         return $this->terms;
     }

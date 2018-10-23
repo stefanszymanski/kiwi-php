@@ -8,12 +8,12 @@ class Term
     /**
      * @var Variable
      */
-     protected $variable;
+    protected $variable;
 
     /**
      * @var float
      */
-     protected $coefficient;
+    protected $coefficient;
 
     /**
      * Term constructor.
@@ -22,18 +22,18 @@ class Term
      * @param float $coefficient
      */
     public function __construct(Variable $variable, float $coefficient = 1.0)
-     {
-         $this->variable = $variable;
-         $this->coefficient = $coefficient;
-     }
+    {
+        $this->variable = $variable;
+        $this->coefficient = $coefficient;
+    }
 
     /**
      * @return float
      */
-    public function getValue() : float
-     {
-         return $this->coefficient * $this->variable->getValue();
-     }
+    public function getValue(): float
+    {
+        return $this->coefficient * $this->variable->getValue();
+    }
 
     /**
      * @return Variable

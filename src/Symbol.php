@@ -10,7 +10,7 @@ class Symbol
     public const SLACK = 2;
     public const ERROR = 3;
     public const DUMMY = 4;
-    
+
     /**
      * @var int
      */

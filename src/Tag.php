@@ -9,7 +9,7 @@ class Tag
      * @var Symbol
      */
     protected $marker;
-    
+
     /**
      * @var Symbol
      */

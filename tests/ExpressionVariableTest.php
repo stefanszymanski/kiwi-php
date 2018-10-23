@@ -9,7 +9,7 @@ use Ctefan\Kiwi\Expression;
 
 class ExpressionVariableTest extends TestCase
 {
-    public function testLessThanOrEqual() : void
+    public function testLessThanOrEqual(): void
     {
         $solver = new Solver();
         $x = new Variable('x');
@@ -28,7 +28,7 @@ class ExpressionVariableTest extends TestCase
     /**
      * @expectedException \Ctefan\Kiwi\Exception\UnsatisfiableConstraintException
      */
-    public function testLessThanOrEqualUnsatisfiable() : void
+    public function testLessThanOrEqualUnsatisfiable(): void
     {
         $solver = new Solver();
         $x = new Variable('x');
@@ -42,7 +42,7 @@ class ExpressionVariableTest extends TestCase
         $solver->updateVariables();
     }
 
-    public function testGreaterThanOrEqual() : void
+    public function testGreaterThanOrEqual(): void
     {
         $solver = new Solver();
         $x = new Variable('x');
@@ -61,7 +61,7 @@ class ExpressionVariableTest extends TestCase
     /**
      * @expectedException \Ctefan\Kiwi\Exception\UnsatisfiableConstraintException
      */
-    public function testGreaterThanOrEqualUnsatisfiable() : void
+    public function testGreaterThanOrEqualUnsatisfiable(): void
     {
         $solver = new Solver();
         $x = new Variable('x');

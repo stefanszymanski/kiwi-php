@@ -11,7 +11,7 @@ class Util
      * @param float $value
      * @return bool
      */
-    static public function isNearZero(float $value) : bool
+    static public function isNearZero(float $value): bool
     {
         return $value < 0.0
             ? -$value < self::EPSILON

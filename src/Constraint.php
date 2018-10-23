@@ -15,12 +15,12 @@ class Constraint
      * @var Expression
      */
     protected $expression;
-    
+
     /**
      * @var float
      */
     protected $strength;
-    
+
     /**
      * @var int
      */
@@ -47,7 +47,7 @@ class Constraint
      * @param float $strength
      * @return Constraint
      */
-    static public function createFromConstraint(self $otherConstraint, float $strength) : self
+    static public function createFromConstraint(self $otherConstraint, float $strength): self
     {
         return new self($otherConstraint->getExpression(), $otherConstraint->getOperator(), $strength);
     }
@@ -56,7 +56,7 @@ class Constraint
      * @param Expression $expression
      * @return Expression
      */
-    static private function reduce(Expression $expression) : Expression
+    static private function reduce(Expression $expression): Expression
     {
         $variables = new \SplObjectStorage();
         foreach ($expression->getTerms() as $term) {
@@ -69,12 +69,12 @@ class Constraint
             $value += $term->getCoefficient();
             $variables->attach($variable, $value);
         }
-        
+
         $reducedTerms = [];
         foreach ($variables as $variable) {
             $reducedTerms[] = new Term($variable, $variables->offsetGet($variable));
         }
-        
+
         return new Expression($reducedTerms, $expression->getConstant());
     }
 

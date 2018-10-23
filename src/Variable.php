@@ -12,7 +12,7 @@ class Variable
      * @var string
      */
     protected $name;
-    
+
     /**
      * @var float
      */

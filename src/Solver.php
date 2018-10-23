@@ -20,32 +20,32 @@ class Solver
      * @var \SplObjectStorage<Constraint, Tag>
      */
     protected $constraints;
-    
+
     /**
      * @var \SplObjectStorage<Symbol, Row>
      */
     protected $rows;
-    
+
     /**
      * @var \SplObjectStorage<Variable, Symbol>
      */
     protected $variables;
-    
+
     /**
      * @var \SplObjectStorage<Variable, EditInfo>
      */
     protected $edits;
-    
+
     /**
      * @var array<Symbol>
      */
     protected $infeasibleRows;
-    
+
     /**
      * @var Row
      */
     protected $objective;
-    
+
     /**
      * @var Row
      */
@@ -72,7 +72,7 @@ class Solver
      * @throws UnsatisfiableConstraintException The given constraint is required and cannot be satisfied.
      * @throws InternalSolverException
      */
-    public function addConstraint(Constraint $constraint) : void
+    public function addConstraint(Constraint $constraint): void
     {
         if (true === $this->constraints->contains($constraint)) {
             throw new DuplicateConstraintException($constraint);
@@ -80,15 +80,15 @@ class Solver
 
         // Creating a row causes symbols to reserved for the variables in the constraint.
         // If this method exits with an exception, then its possible those variables will linger in the var map.
-		// Since its likely that those variables will be used in other constraints and since exceptional conditions are uncommon,
-		// I'm not too worried about aggressive cleanup of the var map.
+        // Since its likely that those variables will be used in other constraints and since exceptional conditions are uncommon,
+        // I'm not too worried about aggressive cleanup of the var map.
         $tag = new Tag();
         $row = $this->createRow($constraint, $tag);
         $subject = $this->chooseSubject($row, $tag);
 
         // If chooseSubject() could find a valid entering symbol, one last option is available if the entire row is composed of dummy variables.
-		// If the constant of the row is zero, then this represents redundant constraints and the new dummy marker can enter the basis.
-		// If the constant is non-zero, then it represents an unsatisfiable constraint.
+        // If the constant of the row is zero, then this represents redundant constraints and the new dummy marker can enter the basis.
+        // If the constant is non-zero, then it represents an unsatisfiable constraint.
         if ($subject->getType() === Symbol::INVALID && true === $this->allDummies($row)) {
             if (false === Util::isNearZero($row->getConstant())) {
                 throw new UnsatisfiableConstraintException($constraint);
@@ -98,7 +98,7 @@ class Solver
         }
 
         // If an entering symbol still isn't found, then the row must be added using an artificial variable.
-		// If that fails, then the row represents an unsatisfiable constraint.
+        // If that fails, then the row represents an unsatisfiable constraint.
         if ($subject->getType() === Symbol::INVALID) {
             if (false === $this->addWithArtificialVariable($row)) {
                 throw new UnsatisfiableConstraintException($constraint);
@@ -112,7 +112,7 @@ class Solver
         $this->constraints->attach($constraint, $tag);
 
         // Optimizing after each constraint is added performs less aggregate work due to a smaller average system size.
-		// It also ensures the solver remains in a consistent state.
+        // It also ensures the solver remains in a consistent state.
         $this->optimize($this->objective);
     }
 
@@ -123,12 +123,12 @@ class Solver
      * @throws UnknownConstraintException The given constraint has not been added to the solver.
      * @throws InternalSolverException
      */
-    public function removeConstraint(Constraint $constraint) : void
+    public function removeConstraint(Constraint $constraint): void
     {
         if (false === $this->constraints->contains($constraint)) {
             throw new UnknownConstraintException($constraint);
         }
-        
+
         $tag = $this->constraints->offsetGet($constraint);
         $this->constraints->offsetUnset($constraint);
 
@@ -151,7 +151,7 @@ class Solver
         }
 
         // Optimizing after each constraint is removed ensures that the solver remains consistent.
-		// It makes the solver API easier to use at a small tradeoff for speed.
+        // It makes the solver API easier to use at a small tradeoff for speed.
         $this->optimize($this->objective);
     }
 
@@ -161,7 +161,7 @@ class Solver
      * @param Constraint $constraint
      * @return bool
      */
-    public function hasConstraint(Constraint $constraint) : bool
+    public function hasConstraint(Constraint $constraint): bool
     {
         return $this->constraints->contains($constraint);
     }
@@ -169,7 +169,7 @@ class Solver
     /**
      * Add an edit variable to the solver.
      *
-	 * This method should be called before the 'suggestValue' method is used to supply a suggested value
+     * This method should be called before the 'suggestValue' method is used to supply a suggested value
      * for the given edit variable.
      *
      * @param Variable $variable
@@ -178,22 +178,22 @@ class Solver
      * @throws RequiredFailureException The given strength is >= required.
      * @throws InternalSolverException
      */
-    public function addEditVariable(Variable $variable, float $strength) : void
+    public function addEditVariable(Variable $variable, float $strength): void
     {
         if ($this->edits->contains($variable)) {
             throw new DuplicateEditVariableException();
         }
-        
+
         $strength = Strength::clip($strength);
-        
+
         if (Strength::required() === $strength) {
             throw new RequiredFailureException();
         }
-        
+
         $terms = [];
         $terms[] = new Term($variable);
         $constraint = new Constraint(new Expression($terms), RelationalOperator::EQ, $strength);
-        
+
         try {
             $this->addConstraint($constraint);
         } catch (DuplicateConstraintException $e) {
@@ -201,7 +201,7 @@ class Solver
         } catch (UnsatisfiableConstraintException $e) {
             // TODO log
         }
-        
+
         $info = new EditInfo($constraint, $this->constraints->offsetGet($constraint), 0.0);
         $this->edits->attach($variable, $info);
     }
@@ -213,20 +213,20 @@ class Solver
      * @throws UnknownEditVariableException The given edit variable has not been added to the solver.
      * @throws InternalSolverException
      */
-    public function removeEditVariable(Variable $variable) : void
+    public function removeEditVariable(Variable $variable): void
     {
         if (false === $this->edits->contains($variable)) {
             throw new UnknownEditVariableException();
         }
-        
+
         $info = $this->edits->offsetGet($variable);
-        
+
         try {
             $this->removeConstraint($info->getConstraint());
         } catch (UnknownConstraintException $e) {
             // TODO log
         }
-        
+
         $this->edits->offsetUnset($variable);
     }
 
@@ -236,7 +236,7 @@ class Solver
      * @param Variable $variable
      * @return bool
      */
-    public function hasEditVariable(Variable $variable) : bool
+    public function hasEditVariable(Variable $variable): bool
     {
         return $this->edits->contains($variable);
     }
@@ -252,12 +252,12 @@ class Solver
      * @throws UnknownEditVariableException The given edit variable has not been added to the solver.
      * @throws InternalSolverException
      */
-    public function suggestValue(Variable $variable, float $value) : void
+    public function suggestValue(Variable $variable, float $value): void
     {
         if (false === $this->edits->contains($variable)) {
             throw new UnknownEditVariableException();
         }
-        
+
         $info = $this->edits->offsetGet($variable);
         $delta = $value - $info->getConstant();
         $info->setContant($value);
@@ -290,14 +290,14 @@ class Solver
                 $this->infeasibleRows[] = $symbol;
             }
         }
-        
+
         $this->dualOptimize();
     }
 
     /**
      * Update the values of the external solver variables.
      */
-    public function updateVariables() : void
+    public function updateVariables(): void
     {
         foreach ($this->variables as $variable) {
             $symbol = $this->variables->offsetGet($variable);
@@ -316,7 +316,7 @@ class Solver
      * @param Constraint $constraint
      * @param Tag $tag
      */
-    protected function removeConstraintEffects(Constraint $constraint, Tag $tag) : void
+    protected function removeConstraintEffects(Constraint $constraint, Tag $tag): void
     {
         if ($tag->getMarker()->getType() === Symbol::ERROR) {
             $this->removeMarkerEffects($tag->getMarker(), $constraint->getStrength());
@@ -331,7 +331,7 @@ class Solver
      * @param Symbol $marker
      * @param float $strength
      */
-    protected function removeMarkerEffects(Symbol $marker, float $strength) : void
+    protected function removeMarkerEffects(Symbol $marker, float $strength): void
     {
         if (true === $this->rows->contains($marker)) {
             $row = $this->rows->offsetGet($marker);
@@ -344,27 +344,27 @@ class Solver
     /**
      * Compute the leaving symbol for a marker variable.
      *
-	 * This method will return a symbol corresponding to a basic row which holds the given marker variable.
-	 * The row will be chosen according to the following precedence:
-	 * 1) The row with a restricted basic varible and a negative coefficient for the marker with the smallest ratio of -constant / coefficient.
-	 * 2) The row with a restricted basic variable and the smallest ratio of constant / coefficient.
-	 * 3) The last unrestricted row which contains the marker.
-	 * If the marker does not exist in any row, an invalid symbol will be returned.
-	 * This indicates an internal solver error since the marker should exist somewhere in the tableau.
+     * This method will return a symbol corresponding to a basic row which holds the given marker variable.
+     * The row will be chosen according to the following precedence:
+     * 1) The row with a restricted basic varible and a negative coefficient for the marker with the smallest ratio of -constant / coefficient.
+     * 2) The row with a restricted basic variable and the smallest ratio of constant / coefficient.
+     * 3) The last unrestricted row which contains the marker.
+     * If the marker does not exist in any row, an invalid symbol will be returned.
+     * This indicates an internal solver error since the marker should exist somewhere in the tableau.
      *
      * @param Symbol $marker
      * @return Symbol
      */
-    protected function getMarkerLeavingSymbol(Symbol $marker) : Symbol
+    protected function getMarkerLeavingSymbol(Symbol $marker): Symbol
     {
         $max = PHP_FLOAT_MAX;
         $ratio1 = $max;
         $ratio2 = $max;
-        
+
         $first = new Symbol();
         $second = new Symbol();
         $third = new Symbol();
-        
+
         foreach ($this->rows as $symbol) {
             $candidateRow = $this->rows->offsetGet($symbol);
             $coefficient = $candidateRow->getCoefficientForSymbol($marker);
@@ -387,7 +387,7 @@ class Solver
                 }
             }
         }
-        
+
         if ($first->getType() !== Symbol::INVALID) {
             return $first;
         }
@@ -400,19 +400,19 @@ class Solver
     /**
      * Create a new Row object for the given constraint.
      *
-	 * The terms in the constraint will be converted to cells in the row.
-	 * Any term in the constraint with a coefficient of zero is ignored.
-	 * This method uses the 'getVarSymbol' method to get the symbol for the variables added to the row.
-	 * If the symbol for a given cell variable is basic, the cell variable will be substituted with the basic row.
-	 * The necessary slack and error variables will be added to the row.
-	 * If the constant for the row is negative, the sign for the row will be inverted so the constant becomes positive.
-	 * The tag will be updated with the marker and error symbols to use for tracking the movement of the constraint in the tableau.
+     * The terms in the constraint will be converted to cells in the row.
+     * Any term in the constraint with a coefficient of zero is ignored.
+     * This method uses the 'getVarSymbol' method to get the symbol for the variables added to the row.
+     * If the symbol for a given cell variable is basic, the cell variable will be substituted with the basic row.
+     * The necessary slack and error variables will be added to the row.
+     * If the constant for the row is negative, the sign for the row will be inverted so the constant becomes positive.
+     * The tag will be updated with the marker and error symbols to use for tracking the movement of the constraint in the tableau.
      *
      * @param Constraint $constraint
      * @param Tag $tag
      * @return Row
      */
-    protected function createRow(Constraint $constraint, Tag $tag) : Row
+    protected function createRow(Constraint $constraint, Tag $tag): Row
     {
         $expression = $constraint->getExpression();
         $row = new Row($expression->getConstant());
@@ -427,7 +427,7 @@ class Solver
                     $otherRow = $this->rows->offsetGet($symbol);
                     $row->insertRow($otherRow, $term->getCoefficient());
                 }
-                
+
             }
         }
 
@@ -468,25 +468,25 @@ class Solver
         if ($row->getConstant() < 0.0) {
             $row->reverseSign();
         }
-        
+
         return $row;
     }
 
     /**
      * Choose the subject for solving for the row.
      *
-	 * This method will choose the best subject for using as the solve target for the row.
-	 * An invalid symbol will be returned if there is no valid target.
-	 * The symbols are chosen according to the following precedence:
-	 * 1) The first symbol representing an external variable.
-	 * 2) A negative slack or error tag variable.
-	 * If a subject cannot be found, an invalid symbol will be returned.
+     * This method will choose the best subject for using as the solve target for the row.
+     * An invalid symbol will be returned if there is no valid target.
+     * The symbols are chosen according to the following precedence:
+     * 1) The first symbol representing an external variable.
+     * 2) A negative slack or error tag variable.
+     * If a subject cannot be found, an invalid symbol will be returned.
      *
      * @param Row $row
      * @param Tag $tag
      * @return Symbol
      */
-    protected function chooseSubject(Row $row, Tag $tag) : Symbol
+    protected function chooseSubject(Row $row, Tag $tag): Symbol
     {
         foreach ($row->getCells() as $symbol) {
             if ($symbol->getType() === Symbol::EXTERNAL) {
@@ -509,28 +509,28 @@ class Solver
     /**
      * Add the row to the tableau using an artificial variable.
      *
-	 * This will return false if the constraint cannot be satisfied.
+     * This will return false if the constraint cannot be satisfied.
      *
      * @param Row $row
      * @return bool
      * @throws InternalSolverException
      */
-    protected function addWithArtificialVariable(Row $row) : bool
+    protected function addWithArtificialVariable(Row $row): bool
     {
         // Create and add the artificial variable to the tableau.
         $artificial = new Symbol(Symbol::SLACK);
         $this->rows->attach($artificial, Row::createFromRow($row));
-        
+
         $this->artificial = Row::createFromRow($row);
 
         // Optimize the artificial objective.
-		// This is successful only if the artificial objective is optimized to zero.
+        // This is successful only if the artificial objective is optimized to zero.
         $this->optimize($this->artificial);
         $success = Util::isNearZero($this->artificial->getConstant());
         $this->artificial = null;
 
         // If the artificial variable is basic, pivot the row so that it becomes non-basic.
-		// If the row is constant, exit early.
+        // If the row is constant, exit early.
         if (true === $this->rows->contains($artificial)) {
             $rowPointer = $this->rows->offsetGet($artificial);
 
@@ -543,16 +543,16 @@ class Solver
             while (false === empty($deleteQueue)) {
                 $this->rows->offsetUnset(array_pop($deleteQueue));
             }
-            
+
             if (0 === $rowPointer->getCells()->count()) {
                 return $success;
             }
-            
+
             $entering = $this->anyPivotableSymbol($rowPointer);
             if ($entering->getType() === Symbol::INVALID) {
                 return false;
             }
-            
+
             $rowPointer->solveForSymbols($artificial, $entering);
             $this->substitute($entering, $rowPointer);
             $this->rows->attach($entering, $rowPointer);
@@ -565,20 +565,20 @@ class Solver
         }
 
         $this->objective->remove($artificial);
-        
+
         return $success;
     }
 
     /**
      * Substitute the parametric symbol with the given row.
      *
-	 * This method will substitute all instances of the parametric symbol in the tableau
+     * This method will substitute all instances of the parametric symbol in the tableau
      * and the objective function with the given row.
      *
      * @param Symbol $symbol
      * @param Row $row
      */
-    protected function substitute(Symbol $symbol, Row $row) : void
+    protected function substitute(Symbol $symbol, Row $row): void
     {
         foreach ($this->rows as $currentSymbol) {
             $currentRow = $this->rows->offsetGet($currentSymbol);
@@ -587,9 +587,9 @@ class Solver
                 $this->infeasibleRows[] = $currentSymbol;
             }
         }
-        
+
         $this->objective->substitute($symbol, $row);
-        
+
         if (null !== $this->artificial) {
             $this->artificial->substitute($symbol, $row);
         }
@@ -597,19 +597,19 @@ class Solver
 
     /**
      * Optimize the system for the given objective function.
-	 * This method performs iterations of Phase 2 of the simplex method until the objective function reaches a minimum.
+     * This method performs iterations of Phase 2 of the simplex method until the objective function reaches a minimum.
      *
      * @param Row $objective
      * @throws InternalSolverException The value of the objective function is unbounded.
      */
-    protected function optimize(Row $objective) : void
+    protected function optimize(Row $objective): void
     {
         while (true) {
             $entering = $this->getEnteringSymbol($objective);
             if ($entering->getType() === Symbol::INVALID) {
                 return;
             }
-            
+
             $leaving = $this->getLeavingSymbol($entering);
             if ($leaving->getType() === Symbol::INVALID) {
                 throw new InternalSolverException('The objective is unbounded.');
@@ -627,12 +627,12 @@ class Solver
     /**
      * Optimize the system using the dual of the simplex method.
      *
-	 * The current state of the system should be such that the objective function is optimal, but not feasible.
-	 * This method will perform an iteration of the dual simplex method to make the solution both optimal and feasible.
+     * The current state of the system should be such that the objective function is optimal, but not feasible.
+     * This method will perform an iteration of the dual simplex method to make the solution both optimal and feasible.
      *
      * @throws InternalSolverException The system cannot be dual optimized.
      */
-    protected function dualOptimize() : void
+    protected function dualOptimize(): void
     {
         while (false === empty($this->infeasibleRows)) {
             $leaving = array_shift($this->infeasibleRows);
@@ -650,20 +650,20 @@ class Solver
                     $this->rows->attach($entering, $row);
                 }
             }
-            
+
         }
     }
 
     /**
      * Compute the entering variable for a pivot operation.
      *
-	 * This method will return first symbol in the objective function which is non-dummy and has a coefficient less than zero.
-	 * If no symbol meets the criteria, it means the objective function is at a minimum, and an invalid symbol is returned.
+     * This method will return first symbol in the objective function which is non-dummy and has a coefficient less than zero.
+     * If no symbol meets the criteria, it means the objective function is at a minimum, and an invalid symbol is returned.
      *
      * @param Row $objective
      * @return Symbol
      */
-    protected function getEnteringSymbol(Row $objective) : Symbol
+    protected function getEnteringSymbol(Row $objective): Symbol
     {
         foreach ($objective->getCells() as $symbol) {
             $coefficient = $objective->getCells()->offsetGet($symbol);
@@ -677,19 +677,19 @@ class Solver
     /**
      * Compute the entering symbol for the dual optimize operation.
      *
-	 * This method will return the symbol in the row which has a positive coefficient
+     * This method will return the symbol in the row which has a positive coefficient
      * and yields the minimum ratio for its respective symbol in the objective function.
-	 * The provided row must be infeasible.
-	 * If no symbol is found which meets the criteria, an invalid symbol is returned.
+     * The provided row must be infeasible.
+     * If no symbol is found which meets the criteria, an invalid symbol is returned.
      *
      * @param Row $row
      * @return Symbol
      */
-    protected function getDualEnteringSymbol(Row $row) : Symbol
+    protected function getDualEnteringSymbol(Row $row): Symbol
     {
         $entering = new Symbol();
         $ratio = PHP_FLOAT_MAX;
-        
+
         foreach ($row->getCells() as $symbol) {
             if ($symbol->getType() !== Symbol::DUMMY) {
                 $currentCoefficient = $row->getCells()->offsetGet($symbol);
@@ -703,19 +703,19 @@ class Solver
                 }
             }
         }
-        
+
         return $entering;
     }
 
     /**
      * Get the first Slack or Error symbol in the row.
      *
-	 * If no such symbol is present, an Invalid symbol will be returned.
+     * If no such symbol is present, an Invalid symbol will be returned.
      *
      * @param Row $row
      * @return Symbol
      */
-    protected function anyPivotableSymbol(Row $row) : Symbol
+    protected function anyPivotableSymbol(Row $row): Symbol
     {
         $symbol = new Symbol();
         foreach ($row->getCells() as $_symbol) {
@@ -729,18 +729,18 @@ class Solver
     /**
      * Compute the symbol for pivot exit row.
      *
-	 * This method will return the symbol for the exit row in the row map.
-	 * If no appropriate exit symbol is found, an invalid symbol will be returned.
-	 * This indicates that the objective function is unbounded.
+     * This method will return the symbol for the exit row in the row map.
+     * If no appropriate exit symbol is found, an invalid symbol will be returned.
+     * This indicates that the objective function is unbounded.
      *
      * @param Symbol $entering
      * @return Symbol
      */
-    protected function getLeavingSymbol(Symbol $entering) : Symbol
+    protected function getLeavingSymbol(Symbol $entering): Symbol
     {
         $ratio = PHP_FLOAT_MAX;
         $symbol = new Symbol();
-        
+
         foreach ($this->rows as $currentSymbol) {
             if ($currentSymbol->getType() === Symbol::EXTERNAL) {
                 continue;
@@ -755,19 +755,19 @@ class Solver
                 }
             }
         }
-        
+
         return $symbol;
     }
 
     /**
      * Get the symbol for the given variable.
      *
-	 * If a symbol does not exist for the variable, one will be created.
+     * If a symbol does not exist for the variable, one will be created.
      *
      * @param Variable $variable
      * @return Symbol
      */
-    protected function getVariableSymbol(Variable $variable) : Symbol
+    protected function getVariableSymbol(Variable $variable): Symbol
     {
         if (true === $this->variables->contains($variable)) {
             $symbol = $this->variables->offsetGet($variable);
@@ -784,7 +784,7 @@ class Solver
      * @param Row $row
      * @return bool
      */
-    protected function allDummies(Row $row) : bool
+    protected function allDummies(Row $row): bool
     {
         foreach ($row->getCells() as $symbol) {
             if ($symbol->getType() !== Symbol::DUMMY) {
