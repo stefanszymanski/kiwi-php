@@ -1,5 +1,7 @@
 # kiwi-php
 
+[![Build Status](https://travis-ci.com/Cmytxy/kiwi-php.svg?branch=master)](https://travis-ci.com/Cmytxy/kiwi-php)
+
 A PHP port of the [Kiwi Java](https://github.com/alexbirkett/kiwi-java) implementation of the
 Cassowary constraint solving algorithm
 
