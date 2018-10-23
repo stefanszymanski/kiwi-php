@@ -8,8 +8,19 @@ use Throwable;
 
 class DuplicateConstraintException extends Exception
 {
+    /**
+     * @var Constraint
+     */
     protected $constraint;
 
+    /**
+     * DuplicateConstraintException constructor.
+     *
+     * @param Constraint $constraint
+     * @param string $message
+     * @param int $code
+     * @param Throwable|null $previous
+     */
     public function __construct(Constraint $constraint, string $message = "", int $code = 0, Throwable $previous = null)
     {
         $this->constraint = $constraint;

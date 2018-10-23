@@ -11,6 +11,9 @@ use Ctefan\Kiwi\Exception\UnknownConstraintException;
 use Ctefan\Kiwi\Exception\UnknownEditVariableException;
 use Ctefan\Kiwi\Exception\UnsatisfiableConstraintException;
 
+/**
+ * The constraint solver.
+ */
 class Solver
 {
     /**
@@ -47,7 +50,10 @@ class Solver
      * @var Row
      */
     protected $artificial;
-    
+
+    /**
+     * Solver constructor.
+     */
     public function __construct()
     {
         $this->constraints = new \SplObjectStorage();
@@ -329,9 +335,9 @@ class Solver
     {
         if (true === $this->rows->contains($marker)) {
             $row = $this->rows->offsetGet($marker);
-            $this->objective->insert($row, -$strength);
+            $this->objective->insertSymbol($row, -$strength);
         } else {
-            $this->objective->insert($marker, -$strength);
+            $this->objective->insertSymbol($marker, -$strength);
         }
     }
 
@@ -416,10 +422,10 @@ class Solver
             if (false === Util::isNearZero($term->getCoefficient())) {
                 $symbol = $this->getVariableSymbol($term->getVariable());
                 if (false === $this->rows->contains($symbol)) {
-                    $row->insert($symbol, $term->getCoefficient());
+                    $row->insertSymbol($symbol, $term->getCoefficient());
                 } else {
                     $otherRow = $this->rows->offsetGet($symbol);
-                    $row->insertOtherRow($otherRow, $term->getCoefficient());
+                    $row->insertRow($otherRow, $term->getCoefficient());
                 }
                 
             }
@@ -432,12 +438,12 @@ class Solver
                 $coefficient = $constraint->getOperator() === RelationalOperator::LE ? 1.0 : -1.0;
                 $slack = new Symbol(Symbol::SLACK);
                 $tag->setMarker($slack);
-                $row->insert($slack, $coefficient);
+                $row->insertSymbol($slack, $coefficient);
                 if ($constraint->getStrength() < Strength::required()) {
                     $error = new Symbol(Symbol::ERROR);
                     $tag->setOther($error);
-                    $row->insert($error, -$coefficient);
-                    $this->objective->insert($error, $constraint->getStrength());
+                    $row->insertSymbol($error, -$coefficient);
+                    $this->objective->insertSymbol($error, $constraint->getStrength());
                 }
                 break;
             case RelationalOperator::EQ:
@@ -446,14 +452,14 @@ class Solver
                     $errMinus = new Symbol(Symbol::ERROR);
                     $tag->setMarker($errPlus);
                     $tag->setOther($errMinus);
-                    $row->insert($errPlus, -1.0);
-                    $row->insert($errMinus, 1.0);
-                    $this->objective->insert($errPlus, $constraint->getStrength());
-                    $this->objective->insert($errMinus, $constraint->getStrength());
+                    $row->insertSymbol($errPlus, -1.0);
+                    $row->insertSymbol($errMinus, 1.0);
+                    $this->objective->insertSymbol($errPlus, $constraint->getStrength());
+                    $this->objective->insertSymbol($errMinus, $constraint->getStrength());
                 } else {
                     $dummy = new Symbol(Symbol::DUMMY);
                     $tag->setMarker($dummy);
-                    $row->insert($dummy);
+                    $row->insertSymbol($dummy);
                 }
                 break;
         }

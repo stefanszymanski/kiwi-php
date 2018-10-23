@@ -15,17 +15,28 @@ class Symbol
      * @var int
      */
     protected $type;
-    
+
+    /**
+     * Symbol constructor.
+     *
+     * @param int $type
+     */
     public function __construct(int $type = self::INVALID)
     {
         $this->type = $type;
     }
-    
+
+    /**
+     * @return int
+     */
     public function getType(): int
     {
         return $this->type;
     }
-    
+
+    /**
+     * @param int $type
+     */
     public function setType(int $type): void
     {
         $this->type = $type;
