@@ -1,0 +1,17 @@
+language: php
+
+php:
+  - '7.2'
+  - nightly
+
+dist: trusty
+
+matrix:
+  allow_failures:
+    - php: nightly
+
+install:
+  - composer install --no-interaction
+
+script:
+  - vendor/bin/phpunit --coverage-text
