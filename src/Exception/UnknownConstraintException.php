@@ -18,7 +18,7 @@ class UnknownConstraintException extends Exception
      * @param Constraint $constraint
      * @param string $message
      * @param int $code
-     * @param Throwable|null $previous
+     * @param \Throwable|null $previous
      */
     public function __construct(Constraint $constraint, string $message = "", int $code = 0, \Throwable $previous = null)
     {
