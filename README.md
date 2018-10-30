@@ -2,6 +2,11 @@
 
 [![Build Status](https://travis-ci.com/Cmytxy/kiwi-php.svg?branch=master)](https://travis-ci.com/Cmytxy/kiwi-php)
 
+[![Build Status](https://scrutinizer-ci.com/g/Cmytxy/kiwi-php/badges/build.png?b=master)](https://scrutinizer-ci.com/g/Cmytxy/kiwi-php/build-status/master)
+[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/Cmytxy/kiwi-php/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/Cmytxy/kiwi-php/?branch=master)
+[![Code Coverage](https://scrutinizer-ci.com/g/Cmytxy/kiwi-php/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/Cmytxy/kiwi-php/?branch=master)
+
+
 A PHP port of the [Kiwi Java](https://github.com/alexbirkett/kiwi-java) implementation of the
 Cassowary constraint solving algorithm
 
